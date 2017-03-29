@@ -2,6 +2,7 @@ import os
 import Action
 
 class Entity:
+    yes_no_str_buttons = "[כן|לא]"
 
     def __init__(self, rootDir, entityFileName, spellingFileName, conversationFileName):
         self.entityFileName = entityFileName
@@ -10,7 +11,6 @@ class Entity:
         self.actions = []
         self.entityNameHeb = ""
         self.InitSpellingBank(rootDir)
-
         actionsNames = os.listdir(rootDir + '/' + entityFileName)
         for action in actionsNames:
             if("." not in action):
@@ -19,17 +19,31 @@ class Entity:
     def InitSpellingBank(self, rootDir):
         file = open(rootDir + '/' + self.entityFileName + '/' + self.spellingFileName, encoding='utf-8')
         self.spelling = [line.rstrip('\n') for line in file]
-        self.entityNameHeb = self.spelling[0]
+        if len(self.spelling) > 0:
+            self.entityNameHeb = self.spelling[0]
+        file.close()
 
     def AskUserForAction(self):
-        ''' TODO check if there are two action -
-        but for now the default behaviour is to ask user to what action he meant '''
-
-        actions = "רק לוודא, התכוונת ל\n"
-        for action in self.actions:
-            actions += action.actionNameHeb + ' ' + action.entityNameHeb + '\nאו\n'
-
-        if len(actions) > 3:
-            actions = actions[:len(actions) - 4]
+        answer_actions = self.strAllActions()
+        actions = ""
+        if answer_actions[0] == 1:
+            bold_action = "<b>" + answer_actions[1] + "</b>"
+            actions += "אני רק מוודא, התכוונת ל" + bold_action + "?\n" + self.yes_no_str_buttons
+        else:
+            actions += "אני רק מוודא, התכוונת ל\n"
+            actions += '[' + self.strAllActions() + ']'
 
         return actions
+
+    def strAllActions(self):
+        actions = ""
+
+        if len(self.actions) == 1:
+            action = self.actions[0]
+            return [1, action.actionNameHeb + ' ' + action.entityNameHeb]
+        else:
+            for action in self.actions:
+                actions += action.actionNameHeb + ' ' + action.entityNameHeb + '|'
+            actions = actions[:len(actions) - 1]
+
+        return [len(self.actions), actions]
